@@ -1,0 +1,100 @@
+name: Retry Loop with Counter
+description: Demonstrates retry logic with maximum attempt limit using variables
+version: "1.0"
+
+# This workflow implements a retry mechanism for API calls
+# It will retry up to 3 times if the operation fails
+
+nodes:
+  # Initialize retry counter
+  - id: start
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      You are a system that processes user requests.
+
+      The user wants to: ${ inputs.query }
+
+      Initialize the request. Say "Processing your request..." and prepare to call the API.
+    next: call_api
+
+  # Simulate API call (in real implementation, this would be a tool node)
+  - id: call_api
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      Simulate an API call to process the user's request: ${ inputs.query }
+
+      For demonstration purposes:
+      - 70% chance: Respond with "SUCCESS: Operation completed"
+      - 30% chance: Respond with "FAILURE: Connection timeout"
+
+      Be realistic in your simulation.
+    next: check_result
+
+  # Check if the API call succeeded
+  - id: check_result
+    type: selector
+    cases:
+      # Success - exit loop
+      - if: "nodes.call_api.output.contains('SUCCESS')"
+        next: success_handler
+
+      # Failure but haven't reached max retries (retry count < 3)
+      # Note: In real implementation, we would track vars.retry_count
+      - if: "nodes.call_api.output.contains('FAILURE') && (vars.retry_count == null || vars.retry_count < 2)"
+        next: retry_handler
+
+      # Failure and max retries reached
+      - if: "nodes.call_api.output.contains('FAILURE')"
+        next: max_retry_handler
+
+      # Unexpected response
+      - if: "true"
+        next: error_handler
+
+  # Increment retry counter and try again
+  - id: retry_handler
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      The API call failed. Current retry count: ${ vars.retry_count != null ? vars.retry_count + 1 : 1 }
+
+      Inform the user: "Request failed. Retrying (attempt X/3)..."
+
+      Note: In the next attempt, we will increment the retry counter.
+    next: call_api  # Loop back to retry
+
+  # Success path
+  - id: success_handler
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      The operation completed successfully!
+
+      Total attempts: ${ vars.retry_count != null ? vars.retry_count + 1 : 1 }
+
+      Provide the result to the user with a success message.
+
+  # Max retries exceeded
+  - id: max_retry_handler
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      The operation failed after 3 attempts.
+
+      Apologize to the user and suggest:
+      1. Try again later
+      2. Contact support
+      3. Check their input and try a different approach
+
+  # Error handler for unexpected cases
+  - id: error_handler
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      An unexpected error occurred.
+
+      The API response was unclear: ${ nodes.call_api.output }
+
+      Apologize and suggest the user try again or contact support.

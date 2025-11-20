@@ -1,18 +1,32 @@
-name: "Conditional Routing"
-description: "Uses selector to route based on user intent"
+name: "Conditional Routing with CEL"
+description: "Uses CEL-based selector to route based on classified intent"
 version: "1.0"
 
 nodes:
+  # First, classify the intent using an LLM
   - id: "classify_intent"
-    type: "selector"
+    type: "generate"
     model: "gpt-4o"
-    system_prompt: "Classify the user's intent. Choose 'question' if they're asking something, 'task' if they want something done, or 'chat' for general conversation."
-    options:
-      - case: "question"
+    system_prompt: |
+      Classify the user's intent into exactly one word:
+      - "question" if they're asking something
+      - "task" if they want something done
+      - "chat" for general conversation
+
+      Respond with ONLY one of these three words: question, task, or chat
+    next: "route_by_intent"
+
+  # Then route based on the classification using CEL
+  - id: "route_by_intent"
+    type: "selector"
+    cases:
+      - if: "nodes.classify_intent.output.toLowerCase().contains('question')"
         next: "answer_question"
-      - case: "task"
+      - if: "nodes.classify_intent.output.toLowerCase().contains('task')"
         next: "handle_task"
-      - case: "chat"
+      - if: "nodes.classify_intent.output.toLowerCase().contains('chat')"
+        next: "casual_chat"
+      - if: "true"  # Default case
         next: "casual_chat"
 
   - id: "answer_question"

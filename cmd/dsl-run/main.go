@@ -50,6 +50,7 @@ func main() {
 	eng := engine.NewEngine()
 	eng.RegisterExecutor(dsl.NodeGenerate, &node.GenerateExecutor{Provider: llmProvider})
 	eng.RegisterExecutor(dsl.NodeTool, &node.ToolExecutor{Registry: toolRegistry})
+	eng.RegisterExecutor(dsl.NodeSelector, &node.SelectorExecutor{})
 	eng.RegisterExecutor(dsl.NodeNoop, &node.NoopExecutor{})
 
 	// Prepare Input

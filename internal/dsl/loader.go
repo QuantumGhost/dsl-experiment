@@ -208,15 +208,18 @@ func validateNode(node Node, allIDs map[string]bool) error {
 			return fmt.Errorf("missing required field: model")
 		}
 	case *SelectorNode:
-		if len(n.Options) == 0 {
-			return fmt.Errorf("selector must have at least one option")
+		if len(n.Cases) == 0 {
+			return fmt.Errorf("selector must have at least one case")
 		}
-		for _, opt := range n.Options {
-			if opt.Next == "" {
-				return fmt.Errorf("option case '%s' missing next pointer", opt.Case)
+		for i, c := range n.Cases {
+			if c.If == "" {
+				return fmt.Errorf("case[%d] missing 'if' condition", i)
 			}
-			if !allIDs[opt.Next] {
-				return fmt.Errorf("option next pointer '%s' not found", opt.Next)
+			if c.Next == "" {
+				return fmt.Errorf("case[%d] with condition '%s' missing next pointer", i, c.If)
+			}
+			if !allIDs[c.Next] {
+				return fmt.Errorf("case next pointer '%s' not found", c.Next)
 			}
 		}
 	case *ParallelNode:

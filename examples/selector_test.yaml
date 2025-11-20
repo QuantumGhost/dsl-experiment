@@ -1,0 +1,30 @@
+name: Simple Selector Test
+description: Test selector with CEL conditions
+version: "1.0"
+
+nodes:
+  - id: start
+    type: generate
+    model: gpt-4o
+    system_prompt: "Say 'test complete' and nothing else."
+    next: check_result
+
+  - id: check_result
+    type: selector
+    cases:
+      # Check if output contains "complete"
+      - if: "nodes.start.output.contains('complete')"
+        next: success
+      # Default case
+      - if: "true"
+        next: failure
+
+  - id: success
+    type: generate
+    model: gpt-4o
+    system_prompt: "Say 'Success! The selector worked.'"
+
+  - id: failure
+    type: generate
+    model: gpt-4o
+    system_prompt: "Say 'Failed - selector did not match.'"

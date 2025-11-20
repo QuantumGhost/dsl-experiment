@@ -170,17 +170,16 @@ func TestSelectorNode_Implementation(t *testing.T) {
 			ID:   "selector1",
 			Type: NodeSelector,
 		},
-		Model: "gpt-4o",
-		Options: []Option{
-			{Case: "yes", Next: "path1"},
-			{Case: "no", Next: "path2"},
+		Cases: []Case{
+			{If: "inputs.choice == 'yes'", Next: "path1"},
+			{If: "inputs.choice == 'no'", Next: "path2"},
 		},
 	}
 
 	var _ Node = node
 
-	if len(node.Options) != 2 {
-		t.Errorf("Expected 2 options, got %d", len(node.Options))
+	if len(node.Cases) != 2 {
+		t.Errorf("Expected 2 cases, got %d", len(node.Cases))
 	}
 }
 

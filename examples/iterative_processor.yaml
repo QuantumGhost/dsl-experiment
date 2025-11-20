@@ -1,0 +1,110 @@
+name: Iterative Task Processor
+description: Demonstrates iterative processing with conditional looping
+version: "1.0"
+
+# This workflow processes a list of tasks iteratively
+# It continues processing until all tasks are done or an error occurs
+
+nodes:
+  # Start: Get the task list from user
+  - id: get_tasks
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      Ask the user to provide a list of tasks they need help with.
+      They can list multiple items separated by commas or line breaks.
+      Example: "Write email, Review document, Schedule meeting"
+    next: parse_tasks
+
+  # Parse and prepare the task list
+  - id: parse_tasks
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      The user provided their task list: ${ inputs.query }
+
+      Extract and number each task clearly.
+      Acknowledge the total count.
+      Say "Let's start with the first task" and ask if they're ready.
+    next: process_next_task
+
+  # Process one task at a time
+  - id: process_next_task
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      Help the user with the current task.
+
+      Provide specific, actionable guidance.
+      Ask if they need additional help with this task or if they're ready to move to the next one.
+
+      If they say "next", "done", or "continue", that means move to next task.
+      If they say "stop", "quit", or "exit", that means end the session.
+    next: check_continuation
+
+  # Check whether to continue, loop, or exit
+  - id: check_continuation
+    type: selector
+    cases:
+      # User wants to exit
+      - if: "nodes.process_next_task.output.toLowerCase().contains('exit') || nodes.process_next_task.output.toLowerCase().contains('quit') || nodes.process_next_task.output.toLowerCase().contains('stop')"
+        next: summary
+
+      # User wants more help with current task (loop back)
+      - if: "nodes.process_next_task.output.toLowerCase().contains('help') || nodes.process_next_task.output.toLowerCase().contains('more')"
+        next: process_next_task
+
+      # User is ready for next task (continue loop)
+      - if: "nodes.process_next_task.output.toLowerCase().contains('next') || nodes.process_next_task.output.toLowerCase().contains('done') || nodes.process_next_task.output.toLowerCase().contains('continue')"
+        next: check_completion
+
+      # Default: ask for clarification
+      - if: "true"
+        next: clarify_intent
+
+  # Check if all tasks are completed
+  - id: check_completion
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      Check if there are more tasks remaining in the original list.
+
+      If yes: Say "Great! Moving to the next task." and present the next task.
+      If no: Say "COMPLETE - All tasks have been addressed!"
+    next: completion_router
+
+  # Route based on completion status
+  - id: completion_router
+    type: selector
+    cases:
+      # All tasks done
+      - if: "nodes.check_completion.output.contains('COMPLETE')"
+        next: summary
+
+      # More tasks remaining - loop back
+      - if: "true"
+        next: process_next_task
+
+  # Ask user to clarify their intent
+  - id: clarify_intent
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      The user's response wasn't clear.
+
+      Politely ask them to clarify:
+      - Do they need more help with the current task?
+      - Are they ready to move to the next task?
+      - Do they want to stop for now?
+    next: process_next_task
+
+  # Final summary
+  - id: summary
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      Provide a helpful summary of the session.
+
+      - Acknowledge the tasks that were addressed
+      - Offer any final tips or encouragement
+      - Invite them to return if they need more help

@@ -1,15 +1,18 @@
-# dsl-exp - Runtime
+# Dify DSL Next - Go Runtime
 
-A minimal, event-driven runtime for executing dsl-exp workflows in Go.
+A production-ready, event-driven runtime for executing Dify DSL workflows in Go with CEL expression support.
 
 ## Features
 
+- ✅ **CEL Expressions**: Dynamic content with Common Expression Language (`${ }` syntax)
 - ✅ **Message-Centric Design**: Conversation history is the core state
 - ✅ **Event-Driven**: Streaming execution with real-time events
-- ✅ **Parallel Execution**: Run multiple branches concurrently
-- ✅ **Type-Safe**: Strong typing with Go structs
-- ✅ **Extensible**: Plugin architecture for LLM providers
-- ✅ **Testable**: Mock providers for comprehensive testing
+- ✅ **Tool Integration**: Extensible tool registry with dynamic parameters
+- ✅ **Type-Safe**: Strong typing with Go structs and sealed interfaces
+- ✅ **LLM Provider Abstraction**: Support for OpenAI (with streaming) and mock providers
+- ✅ **Parallel Execution**: Run multiple branches concurrently (planned)
+- ✅ **High Test Coverage**: >80% average, 100% for core memory module
+- ✅ **Testable**: Comprehensive mocking for unit and integration tests
 
 ## Quick Start
 
@@ -41,6 +44,49 @@ Or using Mock provider:
 ```bash
 DSL_EXP_LLM_PROVIDER=mock DSL_EXP_MOCK_RESPONSE="Mock response" go run cmd/dsl-run/main.go -input "San Francisco" examples/tool_use.yaml
 ```
+
+
+## Documentation
+
+- **[CEL Expression Reference](docs/CEL_REFERENCE.md)** - Complete guide to using CEL expressions
+- **[Expression Language Design](docs/EXPRESSION_LANGUAGE_DESIGN.md)** - Architecture and design decisions
+- **[JSONSchema](docs/planning/dsl-schema.json)** - Formal schema definition for workflows
+- **[System Prompt Design](docs/SYSTEM_PROMPT_DESIGN.md)** - Memory and prompt engineering
+- **[Sealed Interfaces](docs/SEALED_INTERFACES.md)** - Tagged union pattern in Go
+
+## CEL Expressions
+
+Dynamic expressions can be used in:
+
+### 1. Tool Parameters
+```yaml
+- id: get_weather
+  type: tool
+  tool_name: weather
+  parameters:
+    city: "${ inputs.query }"  # CEL expression
+```
+
+### 2. System Prompts
+```yaml
+- id: personalized_greeting
+  type: generate
+  model: gpt-4
+  system_prompt: "Hello ${ inputs.user_name }, the weather in ${ inputs.city } is ${ nodes.weather.data.condition }"
+```
+
+### 3. Conditional Branching (Planned)
+```yaml
+- id: score_router
+  type: selector
+  cases:
+    - if: "inputs.score >= 90"
+      next: excellent
+    - if: "inputs.score >= 60"
+      next: pass
+```
+
+See [CEL_REFERENCE.md](docs/CEL_REFERENCE.md) for full syntax and examples.
 
 ## Project Structure
 

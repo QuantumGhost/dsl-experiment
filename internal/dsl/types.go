@@ -77,11 +77,16 @@ type ParallelNode struct {
 	Reducer  Node     `yaml:"reducer,omitempty" json:"reducer,omitempty"`
 }
 
+// SelectorNode performs conditional branching using CEL expressions
 type SelectorNode struct {
-	BaseNode     `yaml:",inline"`
-	Model        string   `yaml:"model,omitempty" json:"model,omitempty"`
-	SystemPrompt string   `yaml:"system_prompt,omitempty" json:"system_prompt,omitempty"`
-	Options      []Option `yaml:"options,omitempty" json:"options,omitempty"`
+	BaseNode `yaml:",inline"`
+	Cases    []Case `yaml:"cases" json:"cases"`
+}
+
+// Case represents a conditional branch with a CEL expression
+type Case struct {
+	If   string `yaml:"if" json:"if"`     // CEL boolean expression
+	Next string `yaml:"next" json:"next"` // Node ID to jump to if condition is true
 }
 
 type GroupNode struct {
@@ -95,9 +100,4 @@ type NoopNode struct {
 
 type Branch struct {
 	Nodes NodeList `yaml:"nodes" json:"nodes"`
-}
-
-type Option struct {
-	Case string `yaml:"case" json:"case"`
-	Next string `yaml:"next" json:"next"`
 }

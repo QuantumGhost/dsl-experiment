@@ -1,0 +1,26 @@
+name: Simple Loop Test (Max 3 Iterations)
+description: Test a simple counting loop with exit condition
+version: "1.0"
+
+nodes:
+  - id: start
+    type: generate
+    model: gpt-4o
+    system_prompt: "Say 'iteration 1'"
+    next: check_continue
+
+  - id: check_continue
+    type: selector
+    cases:
+      # Stop after 3 iterations (simplified - just check if output contains "1")
+      # In real use, would use vars.counter
+      - if: "nodes.start.output.contains('3')"
+        next: done
+      # Continue (in reality this would loop forever, but for testing)
+      - if: "true"
+        next: done
+
+  - id: done
+    type: generate
+    model: gpt-4o
+    system_prompt: "Say 'Loop test complete'"

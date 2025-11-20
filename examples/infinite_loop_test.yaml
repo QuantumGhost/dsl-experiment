@@ -1,0 +1,17 @@
+name: Infinite Loop Test
+description: Test that engine detects infinite loops
+version: "1.0"
+
+nodes:
+  - id: loop_start
+    type: generate
+    model: gpt-4o
+    system_prompt: "Say 'looping'"
+    next: loop_back
+
+  - id: loop_back
+    type: selector
+    cases:
+      # This will always be true, creating an infinite loop
+      - if: "true"
+        next: loop_start

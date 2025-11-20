@@ -1,0 +1,62 @@
+name: Interactive Quiz Loop
+description: Demonstrates loop control using selector nodes with CEL expressions
+version: "1.0"
+
+# This workflow implements a quiz that asks multiple questions in a loop
+# The loop continues until the user answers 3 questions or requests to exit
+
+nodes:
+  # Initialize the quiz
+  - id: start
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      You are a quiz master. Welcome the user to the quiz.
+      Tell them they will answer 3 questions, and they can type 'exit' to quit anytime.
+      Ask the first question about general knowledge.
+    next: check_answer
+
+  # Check and record the answer
+  - id: check_answer
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      The user provided an answer.
+      - If they said 'exit', 'quit', or 'stop', respond with exactly: EXIT
+      - Otherwise, evaluate their answer, provide feedback (correct/incorrect with brief explanation).
+      - Then ask the next question if there are more questions remaining.
+    next: evaluate_response
+
+  # Evaluate whether to continue or exit
+  - id: evaluate_response
+    type: selector
+    cases:
+      # Check if user wants to exit (LLM responded with EXIT)
+      - if: "nodes.check_answer.output.contains('EXIT')"
+        next: goodbye
+
+      # Check if we've reached 3 questions (using a counter in vars)
+      # Note: This is simplified - in real implementation, we'd increment a counter
+      - if: "vars.question_count != null && vars.question_count >= 3"
+        next: final_score
+
+      # Continue the loop - go back to check_answer for next question
+      - if: "true"
+        next: check_answer
+
+  # Exit path - user requested to stop
+  - id: goodbye
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      The user wants to exit the quiz.
+      Thank them for participating and wish them well.
+
+  # Completion path - all questions answered
+  - id: final_score
+    type: generate
+    model: gpt-4o
+    system_prompt: |
+      The quiz is complete!
+      Congratulate the user on finishing all questions.
+      Provide an encouraging summary.

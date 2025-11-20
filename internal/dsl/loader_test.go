@@ -75,9 +75,8 @@ nodes:
     type: "noop"
   - id: "selector1"
     type: "selector"
-    model: "gpt-4o"
-    options:
-      - case: "yes"
+    cases:
+      - if: "true"
         next: "noop1"
   - id: "group1"
     type: "group"
@@ -258,11 +257,10 @@ func TestLoad_SelectorValidation(t *testing.T) {
 nodes:
   - id: "selector1"
     type: "selector"
-    model: "gpt-4o"
-    options:
-      - case: "option1"
+    cases:
+      - if: "inputs.choice == 'option1'"
         next: "node1"
-      - case: "option2"
+      - if: "inputs.choice == 'option2'"
         next: "node2"
   - id: "node1"
     type: "noop"
@@ -282,8 +280,8 @@ nodes:
 		t.Fatal("Failed to cast to SelectorNode")
 	}
 
-	if len(selector.Options) != 2 {
-		t.Errorf("Expected 2 options, got %d", len(selector.Options))
+	if len(selector.Cases) != 2 {
+		t.Errorf("Expected 2 cases, got %d", len(selector.Cases))
 	}
 }
 
@@ -295,8 +293,7 @@ func TestLoad_SelectorEmptyOptions(t *testing.T) {
 nodes:
   - id: "selector1"
     type: "selector"
-    model: "gpt-4o"
-    options: []
+    cases: []
 `
 
 	os.WriteFile(testFile, []byte(content), 0644)
@@ -315,9 +312,8 @@ func TestLoad_SelectorInvalidNext(t *testing.T) {
 nodes:
   - id: "selector1"
     type: "selector"
-    model: "gpt-4o"
-    options:
-      - case: "option1"
+    cases:
+      - if: "true"
         next: "invalid"
 `
 

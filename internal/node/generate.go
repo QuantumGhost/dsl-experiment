@@ -87,12 +87,19 @@ func (e *GenerateExecutor) Execute(ctx context.Context, node dsl.Node, mem *memo
 		}
 	}
 
+	responseText := fullResponse.String()
+
 	// Append Assistant's response to GlobalMemory
 	// Only the actual conversation (User/Assistant/Tool) goes into memory
 	// System prompts are NOT stored in memory
 	mem.Append(memory.Message{
 		Role:    memory.RoleAssistant,
-		Content: fullResponse.String(),
+		Content: responseText,
+	})
+
+	// Store output for CEL access
+	mem.SetNodeOutput(node.GetID(), map[string]interface{}{
+		"output": responseText,
 	})
 
 	return "", nil

@@ -303,16 +303,9 @@ func (m *MockSelectorExecutor) Execute(ctx context.Context, node dsl.Node, mem *
 		return "", nil
 	}
 
-	// Find the next node based on choice
-	for _, opt := range selectorNode.Options {
-		if opt.Case == m.Choice {
-			return opt.Next, nil
-		}
-	}
-
-	// Default to first option
-	if len(selectorNode.Options) > 0 {
-		return selectorNode.Options[0].Next, nil
+	// For mock, just return first case's next (in real implementation, would evaluate CEL)
+	if len(selectorNode.Cases) > 0 {
+		return selectorNode.Cases[0].Next, nil
 	}
 
 	return "", nil

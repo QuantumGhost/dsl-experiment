@@ -58,7 +58,20 @@ func (e *Engine) Run(ctx context.Context, wf *dsl.Workflow, input []memory.Messa
 
 		currentNodeID := wf.Nodes[0].GetID()
 
+		// Safety: prevent infinite loops
+		const maxIterations = 100
+		iterationCount := 0
+
 		for currentNodeID != "" {
+			iterationCount++
+			if iterationCount > maxIterations {
+				ch <- Event{
+					Type:    EventError,
+					Payload: fmt.Errorf("maximum iteration limit (%d) exceeded - possible infinite loop", maxIterations),
+				}
+				return
+			}
+
 			node, exists := nodeMap[currentNodeID]
 			if !exists {
 				ch <- Event{Type: EventError, Payload: fmt.Errorf("node not found: %s", currentNodeID)}
@@ -68,24 +81,24 @@ func (e *Engine) Run(ctx context.Context, wf *dsl.Workflow, input []memory.Messa
 			// Emit NodeStart
 			ch <- Event{Type: EventNodeStart, NodeID: node.GetID()}
 
-			// Resolve Executor
-			exec, ok := e.executors[node.GetType()]
-			if !ok {
-				ch <- Event{Type: EventError, Payload: fmt.Errorf("no executor for type: %s", node.GetType())}
+			// Get executor for this node type
+			executor, exists := e.executors[node.GetType()]
+			if !exists {
+				ch <- Event{Type: EventError, Payload: fmt.Errorf("no executor for node type: %s", node.GetType())}
 				return
 			}
 
-			// Execute Node
-			nextID, err := exec.Execute(ctx, node, mem, ch)
+			// Execute node
+			nextID, err := executor.Execute(ctx, node, mem, ch)
 			if err != nil {
 				ch <- Event{Type: EventError, Payload: err}
 				return
 			}
 
 			// Emit NodeEnd
-			ch <- Event{Type: EventNodeEnd, NodeID: node.GetID()}
+			ch <- Event{Type: EventNodeEnd, NodeID: node.GetID(), Payload: nextID}
 
-			// Move to next
+			// Determine next node
 			if nextID != "" {
 				currentNodeID = nextID
 			} else {

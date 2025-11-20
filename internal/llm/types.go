@@ -39,14 +39,14 @@ type TextEvent struct {
 	Text string
 }
 
-func (*TextEvent) isStreamEvent() {}
+func (TextEvent) isStreamEvent() {}
 
 // ToolCallEvent represents a tool call in the stream
 type ToolCallEvent struct {
 	ToolCall ToolCall
 }
 
-func (*ToolCallEvent) isStreamEvent() {}
+func (ToolCallEvent) isStreamEvent() {}
 
 // Provider defines the interface for LLM providers
 type Provider interface {
