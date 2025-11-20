@@ -1,0 +1,47 @@
+name: "Nested Workflow"
+description: "Complex nested structure with groups and parallel blocks"
+version: "1.0"
+
+nodes:
+  - id: "start"
+    type: "generate"
+    model: "gpt-4o"
+    system_prompt: "Introduction to the analysis workflow."
+    next: "analysis_group"
+
+  - id: "analysis_group"
+    type: "group"
+    memory_policy: "full"
+    next: "conclusion"
+    nodes:
+      - id: "prepare_analysis"
+        type: "generate"
+        model: "gpt-4o"
+        system_prompt: "Prepare for detailed analysis."
+        next: "parallel_analysis"
+
+      - id: "parallel_analysis"
+        type: "parallel"
+        branches:
+          - nodes:
+              - id: "analyze_pros"
+                type: "generate"
+                model: "gpt-4o"
+                system_prompt: "List all the pros."
+
+          - nodes:
+              - id: "analyze_cons"
+                type: "generate"
+                model: "gpt-4o"
+                system_prompt: "List all the cons."
+
+        reducer:
+          id: "compare"
+          type: "generate"
+          model: "gpt-4o"
+          system_prompt: "Compare the pros and cons."
+
+  - id: "conclusion"
+    type: "generate"
+    model: "gpt-4o"
+    system_prompt: "Draw final conclusions based on the analysis."

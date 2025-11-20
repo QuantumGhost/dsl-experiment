@@ -1,0 +1,49 @@
+name: "Parallel Research"
+description: "Researches multiple aspects of a topic in parallel"
+version: "1.0"
+
+nodes:
+  - id: "initial_query"
+    type: "generate"
+    model: "gpt-4o"
+    system_prompt: "Acknowledge the user's research request and outline what will be researched."
+    temperature: 0.5
+    next: "parallel_research"
+
+  - id: "parallel_research"
+    type: "parallel"
+    branches:
+      - nodes:
+          - id: "research_technical"
+            type: "generate"
+            model: "gpt-4o"
+            system_prompt: "Research the technical aspects of the topic."
+            temperature: 0.3
+
+      - nodes:
+          - id: "research_business"
+            type: "generate"
+            model: "gpt-4o"
+            system_prompt: "Research the business and market aspects."
+            temperature: 0.3
+
+      - nodes:
+          - id: "research_social"
+            type: "generate"
+            model: "gpt-4o"
+            system_prompt: "Research the social and cultural impact."
+            temperature: 0.3
+
+    reducer:
+      id: "synthesize"
+      type: "generate"
+      model: "gpt-4o"
+      system_prompt: "Synthesize the research from all three perspectives into a comprehensive overview."
+      temperature: 0.5
+      next: "final_summary"
+
+  - id: "final_summary"
+    type: "generate"
+    model: "gpt-4o"
+    system_prompt: "Provide a concise executive summary of the research findings."
+    temperature: 0.4

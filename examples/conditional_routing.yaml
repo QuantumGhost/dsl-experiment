@@ -1,0 +1,43 @@
+name: "Conditional Routing"
+description: "Uses selector to route based on user intent"
+version: "1.0"
+
+nodes:
+  - id: "classify_intent"
+    type: "selector"
+    model: "gpt-4o"
+    system_prompt: "Classify the user's intent. Choose 'question' if they're asking something, 'task' if they want something done, or 'chat' for general conversation."
+    options:
+      - case: "question"
+        next: "answer_question"
+      - case: "task"
+        next: "handle_task"
+      - case: "chat"
+        next: "casual_chat"
+
+  - id: "answer_question"
+    type: "generate"
+    model: "gpt-4o"
+    system_prompt: "Provide a clear, factual answer to the user's question."
+    temperature: 0.3
+    next: "closing"
+
+  - id: "handle_task"
+    type: "generate"
+    model: "gpt-4o"
+    system_prompt: "Help the user accomplish their task with step-by-step instructions."
+    temperature: 0.5
+    next: "closing"
+
+  - id: "casual_chat"
+    type: "generate"
+    model: "gpt-4o"
+    system_prompt: "Engage in friendly, casual conversation."
+    temperature: 0.9
+    next: "closing"
+
+  - id: "closing"
+    type: "generate"
+    model: "gpt-4o"
+    system_prompt: "Wrap up the conversation politely."
+    temperature: 0.7

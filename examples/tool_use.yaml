@@ -1,0 +1,20 @@
+name: Tool Use Example
+description: Demonstrates explicit tool usage
+nodes:
+  - id: input
+    type: generate
+    model: gpt-4o
+    system_prompt: "You are a helper. Ask the user for a city."
+    next: get_weather
+
+  - id: get_weather
+    type: tool
+    tool_name: weather
+    parameters:
+      city: "${ inputs.query }" # Use CEL to get the city from user input
+    next: output
+
+  - id: output
+    type: generate
+    model: gpt-4o
+    system_prompt: "Tell the user the weather based on the tool output."
